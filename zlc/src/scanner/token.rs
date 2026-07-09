@@ -18,6 +18,7 @@ pub enum TokenKind {
     OpenCurly,
     CloseCurly,
     Semicolon,
+    Colon,
 
     // Literals
     Literal(Literal),

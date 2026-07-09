@@ -1,8 +1,7 @@
+use crate::scanner::keywords::KEYWORDS;
 use anyhow::{Result, bail};
 use std::mem;
 use token::{Literal, LiteralKind, Span, Token, TokenKind};
-
-use crate::scanner::keywords::KEYWORDS;
 
 mod keywords;
 mod token;
@@ -28,7 +27,7 @@ impl<'a> Scanner<'a> {
     pub fn scan(&mut self) -> Result<Vec<Token>> {
         while !self.is_at_end() {
             self.start = self.current;
-            self.scan_token();
+            self.scan_token()?;
         }
 
         self.add_token(TokenKind::EndOfFile);
@@ -43,12 +42,13 @@ impl<'a> Scanner<'a> {
             '{' => self.add_token(TokenKind::OpenCurly),
             '}' => self.add_token(TokenKind::CloseCurly),
             ';' => self.add_token(TokenKind::Semicolon),
+            ':' => self.add_token(TokenKind::Colon),
             ' ' => {}
             '\n' => {}
             '\r' => {}
             _ => {
                 if c.is_numeric() {
-                    self.scan_number();
+                    self.scan_number()?;
                 } else if c.is_alphabetic() {
                     self.scan_identifier();
                 } else {
