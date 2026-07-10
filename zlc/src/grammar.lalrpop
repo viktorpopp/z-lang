@@ -1,0 +1,95 @@
+use crate::ast::{
+    Package, BlockExpr, Func, FuncRetType, Ident, Item, PathIdentSeg, Stmt, Stmts, Type,
+    TypePath, TypePathSeg, ExprStmt, ExprWithoutBlock, ReturnExpr, Expr, IntLit, LitExpr
+};
+
+grammar;
+
+match {
+    r"\s+" => { },
+    "fn",
+    "return",
+    "(",
+    ")",
+    ":",
+    "{",
+    "}",
+    ";",
+} else {
+    r"[0-9]+" => IntLitRegex,
+    r"[a-zA-Z_][a-zA-Z0-9_]*" => IdentRegex
+}
+
+pub Ident: Ident = {
+    <inner:IdentRegex> => Ident::new(inner)
+}
+
+pub IntLit: IntLit = {
+    <inner:IntLitRegex> => IntLit::new(inner)
+}
+
+pub Package: Package = {
+    <items:Item*> => Package { items }
+}
+
+pub Item: Item = {
+    <func:Func> => Item::Function(func)
+}
+
+pub Func: Func = {
+    "fn" <sym:Ident> "(" ")" <ret:FuncRetType?> <body:BlockExpr> => Func { sym, ret, body }
+}
+
+pub FuncRetType: FuncRetType = {
+    ":" <r#type:Type> => FuncRetType { r#type }
+}
+
+pub Type: Type = {
+    <path:TypePath> => Type { path }
+}
+
+pub TypePath: TypePath = {
+    <seg:TypePathSeg> => TypePath { seg }
+}
+
+pub TypePathSeg: TypePathSeg = {
+    <iseg:PathIdentSeg> => TypePathSeg { iseg } 
+}
+
+pub PathIdentSeg: PathIdentSeg = {
+    <ident:Ident> => PathIdentSeg { ident }
+}
+
+pub BlockExpr: BlockExpr = {
+    "{" <stmts:Stmts?> "}" => BlockExpr { stmts }
+}
+
+pub Stmts: Stmts = {
+    <inner:Stmt+> => Stmts { inner }
+}
+
+pub Stmt: Stmt = {
+    ";" => Stmt::Empty,
+    <expr:ExprStmt> => Stmt::ExprStmt(expr)
+}
+
+pub ExprStmt: ExprStmt = {
+    <expr:ExprWithoutBlock> ";" => ExprStmt::WithoutBlock(expr)
+}
+
+pub ExprWithoutBlock: ExprWithoutBlock = {
+    <expr:LitExpr> => ExprWithoutBlock::LitExpr(expr),
+    <expr:ReturnExpr> => ExprWithoutBlock::ReturnExpr(Box::new(expr))
+}
+
+pub ReturnExpr: ReturnExpr = {
+    "return" <expr:Expr?> => ReturnExpr { expr }
+}
+
+pub Expr: Expr = {
+    <expr:ExprWithoutBlock> => Expr::ExprWithoutBlock(expr)
+}
+
+pub LitExpr: LitExpr = {
+    <lit:IntLit> => LitExpr { lit }
+}

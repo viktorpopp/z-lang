@@ -1,11 +1,13 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use cli::Cli;
-use scanner::Scanner;
+use lalrpop_util::lalrpop_mod;
 use std::fs::read_to_string;
 
+mod ast;
 mod cli;
-mod scanner;
+
+lalrpop_mod!(pub grammar);
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -13,10 +15,11 @@ fn main() -> Result<()> {
     let source = read_to_string(&cli.input)
         .with_context(|| format!("Failed to read input file: {}", &cli.input))?;
 
-    let mut scanner = Scanner::new(&source);
-    let tokens = scanner.scan()?;
+    let ast = grammar::PackageParser::new()
+        .parse(source.as_str())
+        .unwrap();
 
-    println!("{:#?}", tokens);
+    println!("{:#?}", ast);
 
     Ok(())
 }
